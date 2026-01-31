@@ -7,7 +7,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>SMPN 11 TANGERANG</title>
-  <link rel="icon" type="image/png" href="https://i.ibb.co.com/99y5fNyw/LOGO-11.png">
   <script src="/_sdk/element_sdk.js"></script>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
@@ -165,7 +164,7 @@
         // ============================================
         // KONFIGURASI GOOGLE SHEETS
         // ============================================
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzw4ASgcQ8XxEQLctqMDiqCOwyatibFEqOwyZ0uF6bYglk9o9T7VfGuMlqxcnH0FFle/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwoTzpe0QP5y6k95nmlMEz5E_uvtxWpjqobVQXpOBeuCXG_vIN3nawK3OU5zbMAP8vnHQ/exec';
         
         const defaultConfig = {
             app_title: "",
@@ -243,30 +242,28 @@
         // ============================================
         // GOOGLE SHEETS API FUNCTIONS
         // ============================================
-        async function loadAllData() {
+        // ============================================
+        // MODIFIED GOOGLE SHEETS API FUNCTIONS
+        // ============================================
+
+        // 1. LOAD RINGAN: Hanya User & Settings (Dipanggil saat awal buka web)
+        async function loadInitialData() {
             try {
                 showLoading();
-                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getAllData`);
+                // Panggil action 'getLoginData' (sesuai script baru)
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getLoginData`);
                 const data = await response.json();
                 
                 if (data.success) {
                     allUsers = data.users || [];
-                    allQuestions = data.questions || [];
-                    // LOGIKA BARU: Hanya muat hasil ujian jika user adalah Admin atau Guru
-                    const userRole = currentUser ? currentUser.role : null;
-                    if (userRole === 'admin' || userRole === 'guru') {
-                        allExamResults = data.examResults || [];
-                    } else {
-                        allExamResults = []; // Siswa tidak perlu data ini
-                    }
                     
-                    // Load settings dari sheet (kecuali min_time_to_submit yang disimpan di localStorage)
+                    // Load settings
                     if (data.settings) {
                         examSettings.exam_duration = data.settings.exam_duration || examSettings.exam_duration;
                         examSettings.shuffle_questions = data.settings.shuffle_questions || false;
                         examSettings.shuffle_answers = data.settings.shuffle_answers || false;
                         examSettings.show_score = data.settings.show_score !== undefined ? data.settings.show_score : true;
-                        examSettings.max_questions = data.settings.max_questions || 0;                        
+                        examSettings.max_questions = data.settings.max_questions || 0;
                         
                         if (data.settings.active_subjects) {
                             try {
@@ -278,14 +275,44 @@
                             }
                         }
                     }
-                    
                     return true;
                 } else {
-                    showToast('Gagal memuat data: ' + data.message, 'error');
+                    showToast('Gagal memuat user: ' + data.message, 'error');
                     return false;
                 }
             } catch (error) {
-                showToast('Gagal terhubung ke Google Sheets', 'error');
+                showToast('Gagal terhubung ke server', 'error');
+                return false;
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // 2. LOAD BERAT: Soal & Nilai (Dipanggil SETELAH login berhasil)
+        async function loadExamData() {
+            try {
+                showLoading();
+                // Panggil action 'getExamData' (sesuai script baru)
+                const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getExamData`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    allQuestions = data.questions || [];
+                    
+                    // Logika filter role
+                    const userRole = currentUser ? currentUser.role : null;
+                    if (userRole === 'admin' || userRole === 'guru') {
+                        allExamResults = data.examResults || [];
+                    } else {
+                        allExamResults = [];
+                    }
+                    return true;
+                } else {
+                    showToast('Gagal memuat soal: ' + data.message, 'error');
+                    return false;
+                }
+            } catch (error) {
+                showToast('Gagal memuat data ujian', 'error');
                 return false;
             } finally {
                 hideLoading();
@@ -516,7 +543,7 @@
                 }
             }
             // 1. Pastikan data dari server sudah dimuat sebelum mengecek status login
-            const dataLoaded = await loadAllData();
+            const dataLoaded = await loadInitialData();
     
             // 2. Gunakan localStorage agar lebih persisten saat refresh
             const savedUser = localStorage.getItem('currentUser') || sessionStorage.getItem('currentUser');
@@ -524,6 +551,16 @@
     
             if (savedUser && savedExam && dataLoaded) {
                 currentUser = JSON.parse(savedUser);
+
+                // TAMBAHAN PENTING:
+                // Karena user refresh halaman saat ujian, kita WAJIB load soal sekarang
+                const examLoaded = await loadExamData();
+                if (!examLoaded) {
+                    alert("Gagal mengembalikan sesi ujian. Silakan login ulang.");
+                    localStorage.clear();
+                    renderLoginPage();
+                    return;
+                }
                 currentExam = JSON.parse(savedExam);
         
                 // Load data jawaban dan state lainnya
@@ -576,7 +613,7 @@
             const textColor = config.text_color || defaultConfig.text_color;
 
             // Ganti URL ini dengan gambar latar belakang pilihan Anda
-            const bgImage = "https://i.ibb.co.com/VsdD05v/Whats-App-Image-2024-06-17-at-19-11-44.jpg";
+            const bgImage = "https://i.ibb.co.com/99y5fNyw/LOGO-11.png";
             
             document.getElementById('app').innerHTML = `
                 <div class="min-h-full flex items-center justify-center p-4" 
@@ -734,6 +771,14 @@
             currentUser = user;
             sessionStorage.setItem('currentUser', JSON.stringify(user));
             localStorage.setItem('currentUser', JSON.stringify(user)); // Tambahkan ini
+
+            // --- TAMBAHAN BARU DI SINI ---
+            // Karena login sukses, sekarang saatnya download soal yang berat
+            const examDataLoaded = await loadExamData();
+            if (!examDataLoaded) {
+                showError('Gagal memuat data soal. Coba lagi.');
+                return;
+            }
 
             // TAMBAHKAN KODE INI DI SINI
             if (user.role === 'siswa') {
@@ -1141,7 +1186,7 @@
                             ${getQuestionTypeLabel(question.question_type)}
                         </span>
                     </div>
-                    <p class="text-lg mb-4 break-words" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 1.125}px; color: ${textColor}; word-break: break-word; overflow-wrap: break-word;">${question.question_text}</p>
+                    <p class="text-lg mb-4 break-words" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 1.125}px; color: ${textColor}; word-break: break-word; overflow-wrap: break-word; white-space: pre-wrap;">${question.question_text}</p>
                     ${question.question_image && question.question_image.trim() !== '' ? 
                         `<div class="mb-4">
                             <img src="${question.question_image}" alt="Gambar Soal" class="max-w-full h-auto rounded-lg shadow-lg border-2 border-gray-300" 
@@ -1422,23 +1467,23 @@
             if (!confirm('Apakah Anda yakin ingin menyelesaikan ujian?')) return;
             showLoading();
             // Tambahkan delay acak antara 1 hingga 10 detik agar tidak serentak
-            const randomDelay = Math.floor(Math.random() * 25000);
+            const randomDelay = Math.floor(Math.random() * 2000);
             await new Promise(resolve => setTimeout(resolve, randomDelay));
             
             // Tandai bahwa ujian sudah selesai untuk menonaktifkan deteksi pelanggaran
             examSubmitted = true;
-
-            
+                        
             
             const score = calculateScore();
-            
             const answersString = JSON.stringify(studentAnswers);
-            
             const examData = {
                 student_name: currentUser.name,
                 student_class: currentUser.class,
                 exam_subject: currentExam.subject,
-                exam_time: new Date().toISOString(),
+                exam_time: new Date().toLocaleDateString('id-ID', {
+                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                }) + ' WIB',
                 answers: answersString,
                 final_score: score,
                 violations: violationCount
@@ -1464,7 +1509,7 @@
             
             if (success) {
                 // Reload data untuk update hasil ujian terbaru
-                await loadAllData();
+                await loadExamData();
             }
                         
             if (success) {
