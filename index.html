@@ -206,6 +206,8 @@
             
             active_subjects: [] // Array of active exam subjects with schedules
         };
+        let currentAdminTab = 'dashboard'; // Default tab admin
+        let currentGuruTab = 'dashboard';  // Default tab guru
         
         // Load minimum waktu submit dari localStorage
         let minTimeToSubmit = parseInt(localStorage.getItem('minTimeToSubmit') || '0');
@@ -289,9 +291,10 @@
         }
 
         // 2. LOAD BERAT: Soal & Nilai (Dipanggil SETELAH login berhasil)
-        async function loadExamData() {
+        async function loadExamData(silent = false) {
             try {
-                showLoading();
+                // Hanya tampilkan loading jika silent bernilai false
+                if (!silent) showLoading();
                 // Panggil action 'getExamData' (sesuai script baru)
                 const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=getExamData`);
                 const data = await response.json();
@@ -315,7 +318,7 @@
                 showToast('Gagal memuat data ujian', 'error');
                 return false;
             } finally {
-                hideLoading();
+                if (!silent) hideLoading();
             }
         }
         
@@ -613,7 +616,7 @@
             const textColor = config.text_color || defaultConfig.text_color;
 
             // Ganti URL ini dengan gambar latar belakang pilihan Anda
-            const bgImage = "https://i.ibb.co.com/99y5fNyw/LOGO-11.png";
+            const bgImage = "https://i.ibb.co.com/VsdD05v/Whats-App-Image-2024-06-17-at-19-11-44.jpg";
             
             document.getElementById('app').innerHTML = `
                 <div class="min-h-full flex items-center justify-center p-4" 
@@ -1695,17 +1698,21 @@
                 clearInterval(adminRefreshInterval);
             }
             adminRefreshInterval = setInterval(async () => {
-                await loadAllData();
-                const activeSection = document.querySelector('[id^="nav-"]').parentElement.querySelector('[style*="color: rgb"]')?.id.replace('nav-', '');
-                if (activeSection) {
-                    // Update konten tanpa full re-render untuk menghindari flicker
-                    if (activeSection === 'dashboard') {
-                        updateDashboardStats();
-                    } else if (activeSection === 'results') {
-                        updateResultsTable();
-                    }
-                }
-            }, 30000); // Refresh setiap 30 detik
+            await loadExamData(true); // Tambahkan true agar loading tidak muncul
+            updateDashboardStats();
+            
+            /// 3. Cek tab mana yang sedang dibuka, lalu render ulang tab tersebut
+            // Pastikan nama fungsi render di bawah sesuai dengan yang ada di kode Anda
+            if (currentAdminTab === 'results') {
+                renderResultsSection(); // Render ulang tabel hasil
+            } else if (currentAdminTab === 'questions') {
+                renderQuestionsSection(); // Render ulang bank soal
+            } else if (currentAdminTab === 'schedule') {
+                renderScheduleSection(); // Render ulang jadwal (jika ada)
+            } else if (currentAdminTab === 'dashboard') {
+                renderDashboardSection(); // Render ulang bank soal
+            }
+            }, 5000); // Refresh setiap 30 detik
             
             document.getElementById('app').innerHTML = `
                 <div class="h-full flex flex-col">
@@ -3828,4 +3835,5 @@
 
         init();
     </script>
- </html>
+ </html>  
+
