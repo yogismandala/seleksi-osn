@@ -2474,7 +2474,7 @@
                                         <td class="p-3" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">${result.student_name}</td>
                                         <td class="p-3" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">${result.student_class}</td>
                                         <td class="p-3" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">${result.exam_subject}</td>
-                                        <td class="p-3" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">${new Date(result.exam_time).toLocaleString('id-ID')}</td>
+                                        <td class="p-3" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">${result.exam_time ? (!isNaN(new Date(result.exam_time)) ? new Date(result.exam_time).toLocaleString('id-ID') : result.exam_time) : '-'}</td>
                                         <td class="p-3 font-bold" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">${result.final_score}</td>
                                         <td class="p-3">
                                             <span class="px-2 py-1 rounded-full text-xs font-semibold ${result.violations > 0 ? 'bg-red-100 text-red-800' : 'bg-green-100 text-green-800'}" style="font-family: ${customFont}, ${baseFontStack};">
@@ -2569,7 +2569,7 @@
                     <td class="p-3" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">${result.student_name}</td>
                     <td class="p-3" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">${result.student_class}</td>
                     <td class="p-3" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">${result.exam_subject}</td>
-                    <td class="p-3" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">${new Date(result.exam_time).toLocaleString('id-ID')}</td>
+                    <td class="p-3" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">${result.exam_time ? (!isNaN(new Date(result.exam_time)) ? new Date(result.exam_time).toLocaleString('id-ID') : result.exam_time) : '-'}</td>
                     <td class="p-3 font-bold" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">${result.final_score}</td>
                     
                     <td class="p-3">
@@ -2640,7 +2640,6 @@
                 "Kelas": item.student_class,
                 "Mata Pelajaran": item.exam_subject,
                 "Skor": item.final_score,
-                "Waktu Selesai": item.timestamp,
                 "Pelanggaran": item.violations || 0
             }));
 
@@ -3837,6 +3836,7 @@
         init();
     </script>
  </html>  
+
 
 
 
