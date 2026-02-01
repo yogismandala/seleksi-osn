@@ -12,6 +12,11 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
   
+  <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
+  <script src="https://cdn.quilljs.com/1.3.6/quill.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.0/dist/katex.min.js"></script>
+  
   <style>
 
         body {
@@ -165,7 +170,7 @@
         // ============================================
         // KONFIGURASI GOOGLE SHEETS
         // ============================================
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwoTzpe0QP5y6k95nmlMEz5E_uvtxWpjqobVQXpOBeuCXG_vIN3nawK3OU5zbMAP8vnHQ/exec';
+        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyzTXOSSFs3HYszY-i8PVM-A8fI-WVHSNcjG0X306zxDQXNotPPhDvTiDOPKYEG4oNVUw/exec';
         
         const defaultConfig = {
             app_title: "",
@@ -245,11 +250,6 @@
         // ============================================
         // GOOGLE SHEETS API FUNCTIONS
         // ============================================
-        // ============================================
-        // MODIFIED GOOGLE SHEETS API FUNCTIONS
-        // ============================================
-
-        // 1. LOAD RINGAN: Hanya User & Settings (Dipanggil saat awal buka web)
         async function loadInitialData() {
             try {
                 showLoading();
@@ -389,8 +389,9 @@
                 });
                 
                 const result = await response.json();
+                
                 if (result.success) {
-                    await loadAllData();
+                    await loadExamData();
                     if (currentUser.role === 'admin') {
                         renderQuestionsSection();
                     } else if (currentUser.role === 'guru') {
@@ -423,7 +424,7 @@
                 
                 const result = await response.json();
                 if (result.success) {
-                    await loadAllData();
+                    await loadExamData();
                     if (currentUser.role === 'admin') {
                         renderQuestionsSection();
                     } else if (currentUser.role === 'guru') {
@@ -617,7 +618,7 @@
             const textColor = config.text_color || defaultConfig.text_color;
 
             // Ganti URL ini dengan gambar latar belakang pilihan Anda
-            const bgImage = "https://i.ibb.co.com/y77HbPB/Whats-App-Image-2025-04-29-at-06-56-00.jpg";
+            const bgImage = "https://i.ibb.co.com/VsdD05v/Whats-App-Image-2024-06-17-at-19-11-44.jpg";
             
             document.getElementById('app').innerHTML = `
                 <div class="min-h-full flex items-center justify-center p-4" 
@@ -652,7 +653,7 @@
                             </div>
                         
                                 <div id="subjectSelect" style="display: none;">
-                                    <label class="block font-medium mb-2 text-white" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">Mata Pelajaran</label>
+                                    <label class="block font-medium mb-2 text-white" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">Pilih Mata Pelajaran</label>
                                     <select id="subject" 
                                         class="glass-input w-full px-4 py-3 rounded-lg focus:outline-none transition appearance-none"
                                         style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize}px; color: black;">
@@ -901,7 +902,7 @@
                                 </p>
                             </div>
                             <p class="text-gray-500 text-sm" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">
-                                Silakan hubungi admin atau pilih mata pelajaran lain.
+                                Silakan hubungi admin atau pilih Mapel lain.
                             </p>
                         </div>
                         
@@ -952,7 +953,7 @@
                                 }
                                 <div class="flex-1 min-w-0">
                                     <h2 class="font-bold text-sm md:text-base truncate" style="font-family: ${customFont}, ${baseFontStack};">${currentUser.name}</h2>
-                                    <p class="text-xs md:text-sm opacity-90 truncate" style="font-family: ${customFont}, ${baseFontStack};">Kelas ${currentUser.class} - ${currentExam.subject}</p>
+                                    <p class="text-xs md:text-sm opacity-90 truncate" style="font-family: ${customFont}, ${baseFontStack};">Kelas ${currentUser.class} - INFORMATIKA ${currentExam.subject}</p>
                                 </div>
                             </div>
 
@@ -961,7 +962,7 @@
                                 <span id="status-text"></span>
                             </div>
                             <div class="flex items-center gap-2 md:gap-4 w-full sm:w-auto justify-between sm:justify-end">
-                                <div class="flex items-center gap-2 px-3 py-2 rounded-lg" style="background-color: ${violationCount > 0 ? '#fee2e2' : '#dcfce7'};">
+                                <div class="flex items-center gap-2 px-2 py-1 rounded-lg" style="background-color: ${violationCount > 0 ? '#fee2e2' : '#dcfce7'};">
                                     <span class="text-lg md:text-xl">${violationCount > 0 ? '🚨' : '✅'}</span>
                                     <span class="text-sm md:text-base font-semibold" style="font-family: ${customFont}, ${baseFontStack}; color: ${violationCount > 0 ? '#dc2626' : '#16a34a'};">
                                         Pelanggaran: <span id="violationCount">${violationCount}</span>
@@ -1471,12 +1472,13 @@
             if (!confirm('Apakah Anda yakin ingin menyelesaikan ujian?')) return;
             showLoading();
             // Tambahkan delay acak antara 1 hingga 10 detik agar tidak serentak
-            const randomDelay = Math.floor(Math.random() * 2000);
+            const randomDelay = Math.floor(Math.random() * 3000);
             await new Promise(resolve => setTimeout(resolve, randomDelay));
             
             // Tandai bahwa ujian sudah selesai untuk menonaktifkan deteksi pelanggaran
             examSubmitted = true;
-                        
+
+            
             
             const score = calculateScore();
             const answersString = JSON.stringify(studentAnswers);
@@ -1484,10 +1486,7 @@
                 student_name: currentUser.name,
                 student_class: currentUser.class,
                 exam_subject: currentExam.subject,
-                exam_time: new Date().toLocaleDateString('id-ID', {
-                    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
-                    hour: '2-digit', minute: '2-digit'
-                }) + ' WIB',
+                exam_time: new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit'}) + ' WIB',
                 answers: answersString,
                 final_score: score,
                 violations: violationCount
@@ -1706,8 +1705,6 @@
             // Pastikan nama fungsi render di bawah sesuai dengan yang ada di kode Anda
             if (currentAdminTab === 'results') {
                 renderResultsSection(); // Render ulang tabel hasil
-            } else if (currentAdminTab === 'questions') {
-                renderQuestionsSection(); // Render ulang bank soal
             } else if (currentAdminTab === 'schedule') {
                 renderScheduleSection(); // Render ulang jadwal (jika ada)
             } else if (currentAdminTab === 'dashboard') {
@@ -1799,15 +1796,13 @@
                 clearInterval(adminRefreshInterval);
             }
             adminRefreshInterval = setInterval(async () => {
-                await loadAllData();
-                const activeSection = document.querySelector('[id^="nav-"]').parentElement.querySelector('[style*="color: rgb"]')?.id.replace('nav-', '');
-                if (activeSection) {
-                    // Update konten tanpa full re-render untuk menghindari flicker
-                    if (activeSection === 'dashboard') {
-                        updateDashboardStats();
-                    }
+                await loadExamData(true);
+                updateDashboardStats(); // Update statistik guru
+
+                if (currentGuruTab === 'questions') {
+                    renderGuruQuestionsSection(); // Fungsi render soal khusus guru
                 }
-            }, 1800000); // Refresh setiap 30 menit
+            }, 5000); // Refresh setiap 30 menit
             
             document.getElementById('app').innerHTML = `
                 <div class="h-full flex flex-col">
@@ -1967,6 +1962,7 @@
         }
 
         function showAdminSection(section) {
+            currentAdminTab = section;
             const config = window.elementSdk?.config || defaultConfig;
             const primaryColor = config.primary_color || defaultConfig.primary_color;
             
@@ -1990,6 +1986,7 @@
         }
 
         function showGuruSection(section) {
+            currentGuruTab = section;
             const config = window.elementSdk?.config || defaultConfig;
             const primaryColor = config.primary_color || defaultConfig.primary_color;
             
@@ -2028,7 +2025,7 @@
                 : 0;
             
             const recentResults = [...allExamResults]
-                .sort((a, b) => new Date(b.exam_time) - new Date(a.exam_time))
+                .reverse()   //sort((a, b) => new Date(b.exam_time) - new Date(a.exam_time))
                 .slice(0, 5);
             
             document.getElementById('adminContent').innerHTML = `
@@ -2114,7 +2111,7 @@
                 : 0;
             
             const recentResults = [...allExamResults]
-                .sort((a, b) => new Date(b.exam_time) - new Date(a.exam_time))
+                .reverse() //sort((a, b) => new Date(b.exam_time) - new Date(a.exam_time))
                 .slice(0, 5);
             
             document.getElementById('guruContent').innerHTML = `
@@ -2878,9 +2875,10 @@
                     
                     <div>
                         <label class="block text-gray-700 font-medium mb-2" style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize * 0.875}px;">Teks Soal</label>
-                        <textarea id="qText" required rows="3"
-                            class="w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-blue-500"
-                            style="font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize}px;"></textarea>
+                        <div class="bg-white rounded-lg border-2 border-gray-300 overflow-hidden">
+                            <div id="editor-container" style="height: 200px; font-family: ${customFont}, ${baseFontStack}; font-size: ${baseSize}px;"></div>
+                        </div>
+                        <input type="hidden" id="qText" name="qText">
                     </div>
                     
                     <div>
@@ -2907,8 +2905,61 @@
                     </div>
                 </form>
             `;
+
+            // === INISIALISASI QUILL EDITOR ===
+            var quill = new Quill('#editor-container', {
+                theme: 'snow',
+                placeholder: 'Tulis pertanyaan di sini...',
+                modules: {
+                    toolbar: [
+                        [{ 'header': [1, 2, 3, false] }],
+                        ['bold', 'italic', 'underline', 'strike'], // Format huruf
+                        [{ 'script': 'sub'}, { 'script': 'super' }], // Pangkat atas/bawah
+                        [{ 'list': 'ordered'}, { 'list': 'bullet' }],
+                        [{ 'align': [] }],
+                        [{ 'color': [] }, { 'background': [] }],
+                        ['link', 'image', 'formula'], // 'formula' untuk simbol MTK
+                        ['clean']
+                    ]
+                },
+                
+            });
+
+            // Sinkronisasi otomatis: Saat mengetik di Quill, update input tersembunyi 'qText'
+            quill.on('text-change', function() {
+                var html = quill.root.innerHTML;
+                document.getElementById('qText').value = html;
+            });
+
+            // Panggil updateOptions() pertama kali agar form jawaban muncul
+            setTimeout(() => {
+                if(typeof updateOptions === 'function') updateOptions();
+            }, 100);
+
+            // 5. EVENT LISTENER YANG AMAN (PENCEGAH LOGOUT/RELOAD)
+            const form = document.getElementById('addQuestionForm');
             
-            document.getElementById('addQuestionForm').addEventListener('submit', addQuestion);
+            // Hapus listener lama jika ada (untuk menghindari duplikasi, meski opsional di sini)
+            // Kita buat listener baru yang membungkus logika simpan
+            form.addEventListener('submit', function(e) {
+                // PENTING: Baris ini mencegah halaman reload (logout)
+                e.preventDefault(); 
+                
+                // Cek apakah editor kosong? (Opsional)
+                if (quill.root.innerHTML === '<p><br></p>') {
+                    alert('Pertanyaan tidak boleh kosong!');
+                    return;
+                }
+
+                // Salin isi dari Quill ke input hidden 'qText'
+                // agar fungsi addQuestion bisa membacanya
+                document.getElementById('qText').value = quill.root.innerHTML;
+                
+                // Panggil fungsi penyimpanan asli
+                addQuestion(e);
+            });
+            
+            //document.getElementById('addQuestionForm').addEventListener('submit', addQuestion);
         }
 
         function showGuruAddQuestionForm() { //guru nambah soal
@@ -3835,9 +3886,4 @@
 
         init();
     </script>
- </html>  
-
-
-
-
-
+ </html>
