@@ -357,7 +357,7 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    allQuestions = data.questions || [];
+                    allQuestions = (data.questions || []).filter(q => q && q.question_text && typeof q.question_text === 'string');
                     
                     // Logika filter role
                     const userRole = currentUser ? currentUser.role : null;
@@ -4160,3 +4160,4 @@
         init();
     </script>
  </html>
+
