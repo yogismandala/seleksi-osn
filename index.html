@@ -617,7 +617,7 @@
             // Fungsi Fetch Data ke Supabase
             async function ambilDataTerbaru() {
                 const { data, error } = await dbClient
-                    .from('monitoring')
+                    .from('osn_monitoring')
                     .select('*')
                     .order('last_update', { ascending: false }); // Yang baru update di paling atas
 
@@ -2246,13 +2246,13 @@
                             </div>
 
                             <div class="p-4 md:p-6 max-w-7xl mx-auto w-full">
-                                <div class="bg-white rounded-lg shadow overflow-hidden">
+                                <div class="bg-white rounded-lg shadow overflow-x-auto">
                                     <table class="min-w-full text-sm">
                                         <thead class="bg-gray-800 text-white">
                                             <tr>
                                                 <th class="p-3 text-left">Nama Siswa</th>
-                                                <th class="p-3 text-left">Kelas</th>
-                                                <th class="px-5 py-3">Mapel</th>
+                                                <th class="p-3 text-center">Kelas</th>
+                                                <th class="p-3 text-center">Mapel</th>
                                                 <th class="p-3 text-center">Status</th>
                                                 <th class="p-3 text-center">Progress</th>
                                                 <th class="p-3 text-right">Update</th>
@@ -4532,5 +4532,6 @@
         </script>
     </body>
  </html>
+
 
 
